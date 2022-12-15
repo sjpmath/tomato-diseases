@@ -47,20 +47,29 @@ def load_image(dataset_root, train):
     return samples, gt
 
 class TomatoDiseaseDataset(Dataset):
-    def __init__(self, dataset_root, train):
+    def __init__(self, dataset_root, train, transform):
         super().__init__()
         self.samples, self.gt = load_image(dataset_root, train)
-
+        self.transform_fn = transform
 
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, index):
-        image = Image.open(self.samples[index]) # pixel image
+        image = Image.open(self.samples[index]).convert('RGB') # pixel image
+
+        '''
+        if len(list(image.mode)) > 3:
+            image =
+        '''
+
+        image = self.transform_fn(image)
+
+
         gt = self.gt[index]
         ret = {
             'x': image,
-            'y': gt
+            'y': torch.LongTensor([gt]).squeeze()
         }
 
         return ret
@@ -68,6 +77,45 @@ class TomatoDiseaseDataset(Dataset):
 
 
 if __name__=='__main__':
-    dataset = TomatoDiseaseDataset('./archive/', True) #for training
+    import numpy as np
+    import cv2
+
+    transform = transforms.Compose([
+        transforms.Resize((224,224)),
+        transforms.ToTensor(), # normalisation and tensor
+    ])
+
+
+    dataset = TomatoDiseaseDataset('./archive/', True, transform) #for training
+
+    dataloader = DataLoader(dataset, batch_size=8, shuffle=False, num_workers=1)
+    for data in dataloader:
+        image = data['x']
+        print(image.shape)
+        break
+
+    '''
     for data in dataset:
-        print(data['x'].size, data['y'])
+        image = data['x']
+        image = image * 255.0 # [0,1] -> [0,255]
+        image = image.numpy().astype(np.uint8) # dtype -> ndarray
+        # c h w -> h w c
+        image = image.transpose(1,2,0)
+        # RGB 2 BGR
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        cv2.imwrite('test.png', image)
+
+
+
+        break
+    '''
+
+
+
+
+
+
+
+
+
+#
