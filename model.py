@@ -10,7 +10,7 @@ class LeNet5(torch.nn.Module):
         self.maxpool = torch.nn.MaxPool2d((2,2))
         self.conv2 = torch.nn.Conv2d(20, 50, kernel_size=(3,3), padding=1)
         self.flatten = torch.nn.Flatten()
-        self.linear1 = torch.nn.Linear(3200, 100)
+        self.linear1 = torch.nn.Linear(156800, 100)
         self.linear2 = torch.nn.Linear(100, numCategory)
 
     # take x (input image) and output score vector
@@ -27,6 +27,6 @@ class LeNet5(torch.nn.Module):
 if __name__ == '__main__':
     model = LeNet5(11)
     # one sample, RGB, height, width
-    random_noise = torch.randn(2, 3, 32, 32)
+    random_noise = torch.randn(2, 3, 224, 224)
     output = model(random_noise)
     print(output.shape)

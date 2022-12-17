@@ -5,9 +5,12 @@ import torch
 from model import LeNet5
 from dataset import TomatoDiseaseDataset
 from runner import test, train
+import torchvision.transforms as transforms
+from torch.utils.data import Dataset, DataLoader
+from tensorboardX import SummaryWriter
 
 def opt():
-    parser = argeparse.ArgumentParser()
+    parser = argparse.ArgumentParser()
     parser.add_argument('--max_epoch', type=int, default=50)
     parser.add_argument('--batch_size', type=int, default=8)
     return parser.parse_args()
@@ -32,20 +35,27 @@ def main():
     # model object
     model = LeNet5(11)
 
-    optimizer = torch.nn.optim.Adam(model.parameters(), lr=0.0001)
+    writer = SummaryWriter()
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     scheduler = None
     loss_fn = torch.nn.CrossEntropyLoss()
 
     best_accuracy = 0.0
 
+    TEST_EVERY = 5
     for ep in range(1,args.max_epoch):
-        train(model, train_dataloader, loss_fn, optimizer)
+        train(ep, args.max_epoch, model, train_dataloader, loss_fn, optimizer, writer)
         if scheduler is not None:
             scheduler.step()
-        accuracy = test(model, valid_dataloader)
-        if best_accuracy < accuracy:
-            best_accuracy = accuracy
-            best_model = copy.deepcopy(model)
+
+        if ep%TEST_EVERY ==0:
+            accuracy = test(ep, args.max_epoch, model, valid_dataloader, writer)
+            if best_accuracy < accuracy:
+                best_accuracy = accuracy
+                best_model = copy.deepcopy(model)
+
+
     save_path = './best.pth'
     torch.save({
         'weight' : best_model.state_dict()
